@@ -1,0 +1,12 @@
+php_flag  log_errors on
+
+RewriteEngine on
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+
+RewriteRule ^thread/([0-9]+)$ controller/thread.php?id=$1 [L]
+RewriteRule ^threads$ controller/thread.php [L]
+RewriteRule ^users$ controller/users.php [L]
+
+#if I have enough time to add pagination
+#RewriteRule ^tasks/page/([0-9]+)$ controller/task.php?page=$1 [L]
