@@ -27,6 +27,11 @@ class ResponseModel {
     public function send() {
         header('Content-type: application/json;charset=utf-8;');
 
+        //FOR DEVELOPMENT!!!
+        //TODO: REMOVE!
+        header("Access-Control-Allow-Origin: *");
+        header("Access-Control-Allow-Headers: *");
+
         if($this->_toCache == true){
             header('Cache.control: max-age=60');
         } else {

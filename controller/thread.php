@@ -100,7 +100,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     }
 
 } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+
+    try {
+        $query = $writeDB->prepare('DELETE FROM thread WHERE id = :threadid');
+        $query->bindParam(':threadid', $Id, PDO::PARAM_INT);
+        $query->execute();
+
+        $rowCount = $query->rowCount();
+        if($rowCount === 0) {
+            $response = new ResponseModel();
+            $response->setHttpStatusCode(404);
+            $response->setSuccess(false);
+            $response->addMessage("Thread not found");
+            $response->send();
+            exit();
+        }
+
+        $response = new ResponseModel();
+        $response->setHttpStatusCode(200);
+        $response->setSuccess(true);
+        $response->addMessage("Thread deleted");
+        $response->send();
+        exit();
+
+    } catch (PDOException $e) {
+        $response = new ResponseModel();
+        $response->setHttpStatusCode(500);
+        $response->setSuccess(false);
+        $response->addMessage("Thread deleted");
+        $response->send();
+        exit();
+    }
+
     exit();
+
+
 } elseif ($_SERVER['REQUEST_METHOD'] === 'PATCH') {
     exit();
 }
