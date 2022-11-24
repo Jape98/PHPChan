@@ -9,4 +9,4 @@ RewriteRule ^threads$ controller/thread.php [L]
 RewriteRule ^users$ controller/users.php [L]
 
 #if I have enough time to add pagination
-#RewriteRule ^tasks/page/([0-9]+)$ controller/task.php?page=$1 [L]
+#RewriteRule ^threads/page/([0-9]+)$ controller/threads.php?page=$1 [L]

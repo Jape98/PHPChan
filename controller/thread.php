@@ -181,6 +181,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         exit();
     }
 
+} elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+    exit();
 } elseif ($_SERVER['REQUEST_METHOD'] === 'PATCH') {
 
     exit();
