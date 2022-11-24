@@ -36,12 +36,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         }
         try {
             //query to get thread by id,
-            $query = $readDB->prepare('SELECT t.id AS threadId, u.username AS threadUsername, u.id AS threadUserId, t.content AS threadContent, DATE_FORMAT(t.createdAt, "%d.%m.%Y %H:%i") AS threadCreatedAt, p.id AS postId , p.content AS postContent, DATE_FORMAT(p.createdAt, "%d.%m.%Y %H:%i") AS postCreatedAt, pu.id AS postUserId, pu.username AS postUsername FROM thread t INNER JOIN post p ON t.id = p.threadId INNER JOIN user u ON t.userId = u.id INNER JOIN user pu ON p.userId = pu.id WHERE t.id = :threadid');
+            $query = $readDB->prepare('SELECT t.id AS threadId, u.username AS threadUsername, u.id AS threadUserId, t.content AS threadContent, DATE_FORMAT(t.createdAt, "%d.%m.%Y %H:%i") AS threadCreatedAt, p.id AS postId , p.content AS postContent, DATE_FORMAT(p.createdAt, "%d.%m.%Y %H:%i") AS postCreatedAt, pu.id AS postUserId, pu.username AS postUsername FROM thread t LEFT JOIN post p ON t.id = p.threadId LEFT JOIN  user u ON t.userId = u.id LEFT JOIN  user pu ON p.userId = pu.id WHERE t.id = :threadid');
             $query->bindParam(':threadid', $Id, PDO::PARAM_INT);
             $query->execute();
+
             $rowCount = $query->rowCount();
             //if query is empty, return 404
-            if($rowCount === 0) {
+            if($rowCount === 0 || $query === null) {
                 $response = new ResponseModel();
                 $response->setHttpStatusCode(404);
                 $response->setSuccess(false);
@@ -49,31 +50,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 $response->send();
                 exit();
             }
-            
-            
-            //insert query to thread and post models and return 200
+
             $i=true;
             while($row = $query ->fetch(PDO::FETCH_ASSOC)) {
                 if($i==true){
                     $thread = new Thread($row['threadId'], $row['threadUserId'], $row['threadUsername'], $row['threadContent'], $row['threadCreatedAt']);
                     $i=false;
                 }
-                $post = new Post($row['postId'], $row['postCreatedAt'], $row['postUserId'], $row['postUsername'], $row['postContent']);
-                $thread->addPost($post->returnPostAsArray());
+                if ($row['postId'] !== null) {
+                    $post = new Post($row['postId'], $row['postCreatedAt'], $row['postUserId'], $row['postUsername'], $row['postContent']);
+                    $thread->addPost($post->returnPostAsArray());
+                }
             }
-                $threads[] = $thread->returnThreadAsArray();
-                $returnArray = array();
-                $returnArray['threads'] = $threads;
-
-                $response = new ResponseModel();
-                $response->setHttpStatusCode(200);
-                $response->setSuccess(true);
-                $response->toCache(true);
-                $response->setData($returnArray);
-                $response->send();
-                exit();
-                
-            }
+            
+            $threads[] = $thread->returnThreadAsArray();
+            $response = new ResponseModel();
+            $response->setHttpStatusCode(200);
+            $response->setSuccess(true);
+            $response->toCache(true);
+            $response->setData($threads);
+            $response->send();
+            exit();
+        }
         //return 500 if problem with php
         catch (ThreadException $e){
             $response = new ResponseModel();
@@ -99,7 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     } elseif(empty($_GET)) {
 
         try {
-            $query = $readDB->prepare('SELECT t.id AS threadId, u.username AS threadUsername, u.id AS threadUserId, t.content AS threadContent, DATE_FORMAT(t.createdAt, "%d.%m.%Y %H:%i") AS threadCreatedAt FROM thread t INNER JOIN user u ON t.userId = u.id');
+            $query = $readDB->prepare('SELECT t.id AS threadId, u.username AS threadUsername, u.id AS threadUserId, t.content AS threadContent, DATE_FORMAT(t.createdAt, "%d.%m.%Y %H:%i") AS threadCreatedAt FROM thread t LEFT JOIN user u ON t.userId = u.id');
             $query->execute();
 
             $threads = array();
@@ -108,15 +106,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 $thread = new Thread($row['threadId'], $row['threadUserId'], $row['threadUsername'], $row['threadContent'], $row['threadCreatedAt']);
                 $threads[] = $thread->returnThreadAsArray();
             }
-                
-            $returnArray = array();
-            $returnArray['threads'] = $threads;
 
             $response = new ResponseModel();
             $response->setHttpStatusCode(200);
             $response->setSuccess(true);
             $response->toCache(true);
-            $response->setData($returnArray);
+            $response->setData($threads);
             $response->send();
             exit();
 
