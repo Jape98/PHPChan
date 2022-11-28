@@ -1,0 +1,9 @@
+body {
+  background-color: #DEDEDE !important;
+}
+.ui.top.fixed.menu {
+  background: rgb(155,255,0);
+  background: linear-gradient(40deg, rgba(155,255,0,1) 0%, rgba(121,149,0,1) 58%, rgba(240,39,69,1) 82%, rgba(148,21,132,1) 94%, rgba(214,0,209,1) 100%);
+}
+
+.row{display:flex; flex-direction:row;}
