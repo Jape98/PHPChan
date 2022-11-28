@@ -21,7 +21,81 @@ try {
 #endregion
 
 if(array_key_exists("sessionId", $_GET)){
+    #region get current accessToken
+    $sessionId = $_GET['sessionId'];
 
+    if($sessionId == '' || !is_numeric($sessionId)) {
+        $response = new ResponseModel();
+        $response->setHttpStatusCode(400);
+        $response->setSuccess(false);
+        ($sessionId == '' ? $response->addMessage("Session ID cannot be blank") : false);
+        (!is_numeric($sessionId) ? $response->addMessage("Session ID must be numeric") : false);
+        $response->send();
+        exit();
+    }
+
+    if(!isset($_SERVER['HTTP_AUTHORIZATION']) || strlen($_SERVER['HTTP_AUTHORIZATION']) < 1)
+    {
+        $response = new ResponseModel();
+        $response->setHttpStatusCode(401);
+        $response->setSuccess(false);
+        (!isset($_SERVER['HTTP_AUTHORIZATION']) ? $response->addMessage("Access token is missing from the header") : false);
+        (strlen($_SERVER['HTTP_AUTHORIZATION']) < 1 ? $response->addMessage("Access token cannot be blank") : false);
+        $response->send();
+        exit();
+    }
+
+    $accessToken = $_SERVER['HTTP_AUTHORIZATION'];
+    #endregion
+
+#region DELETE session = logout
+  if($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+    try {
+        $query = $writeDB->prepare('DELETE FROM userSession WHERE id = :sessionId AND accessToken = :accessToken');
+        $query->bindParam(':sessionId', $sessionId, PDO::PARAM_INT);
+        $query->bindParam(':accessToken', $accessToken, PDO::PARAM_STR);
+        $query->execute();
+  
+        // get row count
+        $rowCount = $query->rowCount();
+  
+        if($rowCount === 0) {
+          // set up response for unsuccessful log out response
+          $response = new ResponseModel();
+          $response->setHttpStatusCode(400);
+          $response->setSuccess(false);
+          $response->addMessage("Failed to log out of this session using access token provided");
+          $response->send();
+          exit;
+        }
+        
+        // build response data array which contains the session id that has been deleted (logged out)
+        $returnData = array();
+        $returnData['sessionId'] = intval($sessionId);
+  
+        $response = new ResponseModel();
+        $response->setHttpStatusCode(200);
+        $response->setSuccess(true);
+        $response->setData($returnData);
+        $response->send();
+        exit;
+      }
+      catch(PDOException $e) {
+        error_log("Database query error: $e, 0");
+        $response = new ResponseModel();
+        $response->setHttpStatusCode(500);
+        $response->setSuccess(false);
+        $response->addMessage("Issue logging out. Please try again");
+        $response->send();
+        exit;
+    }
+#endregion
+
+
+  } elseif ($_SERVER['REQUEST_METHOD'] === 'PATCH') {
+
+  } 
+// if get is empty, it means user wants to log in
 } elseif (empty($_GET)) {
     #region validate JSON
     if($_SERVER['REQUEST_METHOD'] !== 'POST') {

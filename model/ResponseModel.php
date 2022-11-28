@@ -56,9 +56,9 @@ class ResponseModel {
         }
 
         //send whole data with error message
-        //echo json_encode($this->_Data);
+        echo json_encode($this->_Data);
         
         //send only subcontroller data
-        echo json_encode($this->_data);
+        //echo json_encode($this->_data);
     }
 }

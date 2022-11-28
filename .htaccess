@@ -1,5 +1,8 @@
 php_flag  log_errors on
 
+# Add Apache AUTHORIZATION http header
+SetEnvIf Authorization .+ HTTP_AUTHORIZATION=$0
+
 RewriteEngine on
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_FILENAME} !-f
@@ -9,7 +12,8 @@ RewriteRule ^threads$ controller/thread.php [L]
 
 RewriteRule ^users$ controller/users.php [L]
 
-RewriteRule ^session$ controller/session.php [L]
+RewriteRule ^login$ controller/session.php [L]
+RewriteRule ^session/([0-9]+)$ controller/session.php?sessionId=$1 [L]
 
 #if I have enough time to add pagination
 #RewriteRule ^threads/page/([0-9]+)$ controller/threads.php?page=$1 [L]
