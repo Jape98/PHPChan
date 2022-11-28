@@ -119,7 +119,7 @@ try {
     #region Insert new user to db
     $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
-    $query = $writeDB->prepare('INSERT INTO user (username, email, password) VALUES (:username, :email, :pw)');
+    $query = $writeDB->prepare('INSERT INTO user (username, email, password, loginAttempts) VALUES (:username, :email, :pw, 0)');
     $query->bindParam(':username', $username, PDO::PARAM_STR);
     $query->bindParam(':email', $email, PDO::PARAM_STR);
     $query->bindParam(':pw', $hashed_password, PDO::PARAM_STR);
