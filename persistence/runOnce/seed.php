@@ -20,12 +20,16 @@ try {
 
 try {
     $user = "INSERT INTO user(username, email, password) VALUES('TestUser', 'tester2@test.com', 'test')";
+    $user2 = "INSERT INTO user(username, email, password) VALUES('TestUser2', 'tester@test.com', 'test')";
     $thread = "INSERT INTO thread(userId, content) VALUES(1, 'Test thread.')";
+    $thread2 = "INSERT INTO thread(userId, content) VALUES(2, 'Second test thread.')";
     $post = "INSERT INTO post(threadId, userId, content) VALUES(1, 1, 'Test post')";
     $post2 = "INSERT INTO post(threadId, userId, content) VALUES(1, 1, 'Test post2')";
 
     $writeDB -> exec($user);
+    $writeDB -> exec($user2);
     $writeDB -> exec($thread);
+    $writeDB -> exec($thread2);
     $writeDB -> exec($post);
     $writeDB -> exec($post2);
 

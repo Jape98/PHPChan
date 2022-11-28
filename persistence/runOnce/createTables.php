@@ -26,6 +26,8 @@ try {
         password VARCHAR(255) NOT NULL COLLATE utf8_bin,
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     )";
+    $writeDB -> exec($user);
+
     $thread = "CREATE TABLE thread (
         id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
         userId BIGINT UNSIGNED NOT NULL,
@@ -33,6 +35,8 @@ try {
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         CONSTRAINT fkThreadUserId FOREIGN KEY (userId) REFERENCES user(id) ON DELETE CASCADE ON UPDATE CASCADE
       )";
+    $writeDB -> exec($thread);
+
     $post = "CREATE TABLE post(
         id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
         threadId BIGINT UNSIGNED NOT NULL, 
@@ -42,9 +46,19 @@ try {
         CONSTRAINT fkPostUserId FOREIGN KEY (userId) REFERENCES user(id) ON DELETE CASCADE ON UPDATE CASCADE,
         CONSTRAINT fkThread FOREIGN KEY (threadId) REFERENCES thread(id) ON DELETE CASCADE ON UPDATE CASCADE
     )";
-    $writeDB -> exec($user);
-    $writeDB -> exec($thread);
     $writeDB -> exec($post);
+    
+    $userSession = "CREATE TABLE userSession(
+        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        userId BIGINT UNSIGNED NOT NULL, 
+        accessToken VARCHAR(100) COLLATE utf8_bin,
+        refreshToken VARCHAR(100) COLLATE utf8_bin,
+        accessTokenExpiry DATETIME,
+        refreshTokenExpiry DATETIME,
+        CONSTRAINT fkSessionUserId FOREIGN KEY (userId) REFERENCES user(id) ON DELETE RESTRICT ON UPDATE RESTRICT
+    )";
+    $writeDB -> exec($userSession);
+    
     echo "Tables created successfully";
 
 
