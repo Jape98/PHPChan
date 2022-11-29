@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Button, Item, ItemContent, Segment } from "semantic-ui-react";
 import { Thread } from "../../models/Thread";
 import { useStore } from "../../stores/store";
-import AddNewThread from "../addDataToDb/AddNewThread";
+import AddNewThread from "./AddNewThread";
 
 interface Props {
     threads: Thread[];
