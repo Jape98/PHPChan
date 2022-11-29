@@ -94,7 +94,6 @@
 							"const jsonResponse = pm.response.json();\r",
 							"\r",
 							"pm.collectionVariables.set('refreshToken', jsonResponse.refreshToken);\r",
-							"pm.collectionVariables.set('accessToken', jsonResponse.accessToken);\r",
 							"pm.collectionVariables.set('sessionId', jsonResponse.sessionId);\r",
 							""
 						],
@@ -136,7 +135,6 @@
 							"const jsonResponse = pm.response.json();\r",
 							"\r",
 							"pm.collectionVariables.set('refreshToken', jsonResponse.refreshToken);\r",
-							"pm.collectionVariables.set('accessToken', jsonResponse.accessToken);\r",
 							"pm.collectionVariables.set('sessionId', jsonResponse.sessionId);\r",
 							""
 						],
@@ -149,13 +147,13 @@
 				"header": [
 					{
 						"key": "Authorization",
-						"value": "{{accessToken}}",
+						"value": "{{refreshToken}}",
 						"type": "default"
 					}
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"refreshToken\": \"{{refreshToken}}\"\r\n}",
+					"raw": "",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -182,7 +180,7 @@
 				"header": [
 					{
 						"key": "Authorization",
-						"value": "{{accessToken}}",
+						"value": "{{refreshToken}}",
 						"type": "default"
 					}
 				],
@@ -228,10 +226,6 @@
 		}
 	],
 	"variable": [
-		{
-			"key": "accessToken",
-			"value": ""
-		},
 		{
 			"key": "refreshToken",
 			"value": "",

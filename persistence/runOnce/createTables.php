@@ -52,9 +52,7 @@ try {
     $userSession = "CREATE TABLE userSession(
         id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
         userId BIGINT UNSIGNED NOT NULL, 
-        accessToken VARCHAR(100) COLLATE utf8_bin,
         refreshToken VARCHAR(100) COLLATE utf8_bin,
-        accessTokenExpiry DATETIME,
         refreshTokenExpiry DATETIME,
         CONSTRAINT fkSessionUserId FOREIGN KEY (userId) REFERENCES user(id) ON DELETE RESTRICT ON UPDATE RESTRICT
     )";
@@ -62,9 +60,7 @@ try {
     
     echo "Tables created successfully";
 
-
 } catch(PDOException $e) {
-
 
     error_log("Database error - ".$e, 0);
     $response = new ResponseModel();

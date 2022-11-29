@@ -19,7 +19,7 @@ try {
 #endregion
 
 if(array_key_exists("sessionId", $_GET)){
-    #region get current accessToken
+    #region get current refreshToken
     $sessionId = $_GET['sessionId'];
 
     if($sessionId == '' || !is_numeric($sessionId)) {
@@ -37,21 +37,21 @@ if(array_key_exists("sessionId", $_GET)){
         $response = new ResponseModel();
         $response->setHttpStatusCode(401);
         $response->setSuccess(false);
-        (!isset($_SERVER['HTTP_AUTHORIZATION']) ? $response->addMessage("Access token is missing from the header") : false);
-        (strlen($_SERVER['HTTP_AUTHORIZATION']) < 1 ? $response->addMessage("Access token cannot be blank") : false);
+        (!isset($_SERVER['HTTP_AUTHORIZATION']) ? $response->addMessage("Refresh token is missing from the header") : false);
+        (strlen($_SERVER['HTTP_AUTHORIZATION']) < 1 ? $response->addMessage("Refresh token cannot be blank") : false);
         $response->send();
         exit();
     }
 
-    $accessToken = $_SERVER['HTTP_AUTHORIZATION'];
+    $refreshToken = $_SERVER['HTTP_AUTHORIZATION'];
     #endregion
 
     if($_SERVER['REQUEST_METHOD'] === 'DELETE') {
     #region handle delete as logout
         try {
-            $query = $writeDB->prepare('DELETE FROM userSession WHERE id = :sessionId AND accessToken = :accessToken');
+            $query = $writeDB->prepare('DELETE FROM userSession WHERE id = :sessionId AND refreshToken = :refreshToken');
             $query->bindParam(':sessionId', $sessionId, PDO::PARAM_INT);
-            $query->bindParam(':accessToken', $accessToken, PDO::PARAM_STR);
+            $query->bindParam(':refreshToken', $refreshToken, PDO::PARAM_STR);
             $query->execute();
     
             // get row count
@@ -91,43 +91,10 @@ if(array_key_exists("sessionId", $_GET)){
 
     } elseif ($_SERVER['REQUEST_METHOD'] === 'PATCH') {
 
-        #region validate JSON and input data
-        if($_SERVER['CONTENT_TYPE'] !== 'application/json'){
-            $response = new ResponseModel();
-            $response->setHttpStatusCode(400);
-            $response->setSuccess(false);
-            $response->addMessage("Content type header not set to JSON");
-            $response->send();
-            exit();
-        }
-
-        // get PATCH request body
-        $inputData = file_get_contents('php://input');
-        if(!$inputJson = json_decode($inputData)){
-            $response = new ResponseModel();
-            $response->setHttpStatusCode(400);
-            $response->setSuccess(false);
-            $response->addMessage("Not valid JSON");
-            $response->send();
-            exit();
-        }
-        if(!isset($inputJson->refreshToken) || strlen($inputJson->refreshToken) < 1)  {
-            $response = new ResponseModel();
-            $response->setHttpStatusCode(400);
-            $response->setSuccess(false);
-            (!isset($inputJson->refreshToken) ? $response->addMessage("Refresh Token not supplied") : false);
-            (strlen($inputJson->refreshToken) < 1 ? $response->addMessage("Refresh Token cannot be blank") : false);
-            $response->send();
-            exit();
-        }
-        #endregion
-
         try {
-            $refreshToken = $inputJson->refreshToken;
             #region get needed data from db
-            $query = $writeDB->prepare('SELECT userSession.id as sessionId, user.id as userId, accessToken, refreshToken, loginAttempts, accessTokenExpiry, refreshTokenExpiry FROM userSession, user WHERE user.id = userSession.userId AND userSession.id = :sessionId AND userSession.accessToken = :accessToken AND userSession.refreshToken = :refreshToken');
+            $query = $writeDB->prepare('SELECT userSession.id as sessionId, user.id as userId, refreshToken, loginAttempts, refreshTokenExpiry FROM userSession, user WHERE user.id = userSession.userId AND userSession.id = :sessionId AND userSession.refreshToken = :refreshToken');
             $query->bindParam(':sessionId', $sessionId, PDO::PARAM_INT);
-            $query->bindParam(':accessToken', $accessToken, PDO::PARAM_STR);
             $query->bindParam(':refreshToken', $refreshToken, PDO::PARAM_STR);
             $query->execute();
 
@@ -146,10 +113,8 @@ if(array_key_exists("sessionId", $_GET)){
   
             $fromDb_sessionId = $row['sessionId'];
             $fromDb_userId = $row['userId'];
-            $fromDb_accessToken = $row['accessToken'];
             $fromDb_refreshToken = $row['refreshToken'];
             $fromDb_loginAttempts = $row['loginAttempts'];
-            $fromDb_accessTokenExpiry = $row['accessTokenExpiry'];
             $fromDb_refreshTokenExpiry = $row['refreshTokenExpiry'];
             #endregion
 
@@ -175,22 +140,18 @@ if(array_key_exists("sessionId", $_GET)){
             #endregion
 
             #region create new access token, save to db and send response
+
             //generate random binary, convert to hex, and then into base64 to get valid caracters to use in HTTP header
-            $accessToken = base64_encode(bin2hex(openssl_random_pseudo_bytes(24))).time();
             $refreshToken = base64_encode(bin2hex(openssl_random_pseudo_bytes(24))).time();
-            $accessTokenExpiry = 900; //15 minutes
-            $refreshTokenExpiry = 86400; //24 hours
+            $refreshTokenExpiry = 900; //15 minutes
 
-            $query = $writeDB->prepare('UPDATE userSession SET accessToken = :accessToken, accessTokenExpiry = date_add(NOW(), INTERVAL :accessTokenExpiry SECOND), refreshToken = :refreshToken, refreshTokenExpiry = date_add(NOW(), INTERVAL :refreshTokenExpiry SECOND) WHERE id = :sessionId AND userId = :userId AND accessToken = :oldAccessToken AND refreshtoken = :oldRefreshToken');
-
+            $query = $writeDB->prepare('UPDATE userSession SET refreshToken = :refreshToken, refreshTokenExpiry = date_add(NOW(), INTERVAL :refreshTokenExpiry SECOND) WHERE id = :sessionId AND userId = :userId AND refreshToken = :oldRefreshToken');
             $query->bindParam(':userId', $fromDb_userId, PDO::PARAM_INT);
             $query->bindParam(':sessionId', $fromDb_sessionId, PDO::PARAM_INT);
-            $query->bindParam(':accessToken', $accessToken, PDO::PARAM_STR);
-            $query->bindParam(':accessTokenExpiry', $accessTokenExpiry, PDO::PARAM_INT);
             $query->bindParam(':refreshToken', $refreshToken, PDO::PARAM_STR);
             $query->bindParam(':refreshTokenExpiry', $refreshTokenExpiry, PDO::PARAM_INT);
-            $query->bindParam(':oldAccessToken', $fromDb_accessToken, PDO::PARAM_STR);
             $query->bindParam(':oldRefreshToken', $fromDb_refreshToken, PDO::PARAM_STR);
+
             $query->execute();
 
             $rowCount = $query->rowCount();
@@ -206,8 +167,6 @@ if(array_key_exists("sessionId", $_GET)){
 
             $returnData = array();
             $returnData['sessionId'] = $fromDb_sessionId;
-            $returnData['accessToken'] = $accessToken;
-            $returnData['accessTokenExpiry'] = $accessTokenExpiry;
             $returnData['refreshToken'] = $refreshToken;
             $returnData['refreshTokenExpiry'] = $refreshTokenExpiry;
       
@@ -356,23 +315,21 @@ if(array_key_exists("sessionId", $_GET)){
     try {
         //if login is successful, create tokens
         //generate random binary, convert to hex, and then into base64 to get valid caracters to use in HTTP header
-        $accessToken = base64_encode(bin2hex(openssl_random_pseudo_bytes(24))).time();
         $refreshToken = base64_encode(bin2hex(openssl_random_pseudo_bytes(24))).time();
-        $accessTokenExpiry = 900; //15 minutes
-        $refreshTokenExpiry = 86400; //24 hours
 
-         //Reset login attempts back to 0
+        $refreshTokenExpiry = 900; //15 minutes
+
+        //Reset login attempts back to 0
         $writeDB->beginTransaction();
         $query = $writeDB->prepare('UPDATE user SET loginAttempts = 0 WHERE id = :id');
         $query->bindParam(':id', $fromDb_id, PDO::PARAM_INT);
 
-         //for dates use sql date_add(NOW()) and then add seconds from variable
-        $query = $writeDB->prepare('INSERT INTO userSession (userId, accessToken, accessTokenExpiry, refreshToken, refreshTokenExpiry) VALUES (:userId, :accessToken, date_add(NOW(), INTERVAL :accessTokenExpiry SECOND), :refreshToken, date_add(NOW(), INTERVAL :refreshTokenExpiry SECOND))');
+        //for dates use sql date_add(NOW()) and then add seconds from variable
+        $query = $writeDB->prepare('INSERT INTO userSession (userId, refreshToken, refreshTokenExpiry) VALUES (:userId, :refreshToken, date_add(NOW(), INTERVAL :refreshTokenExpiry SECOND))');
         $query->bindParam(':userId', $fromDb_id, PDO::PARAM_INT);
-        $query->bindParam(':accessToken', $accessToken, PDO::PARAM_STR);
-        $query->bindParam(':accessTokenExpiry', $accessTokenExpiry, PDO::PARAM_INT);
         $query->bindParam(':refreshToken', $refreshToken, PDO::PARAM_STR);
         $query->bindParam(':refreshTokenExpiry', $refreshTokenExpiry, PDO::PARAM_INT);
+
         $query->execute();
 
         $lastSessionId = $writeDB->lastInsertId();
@@ -380,8 +337,6 @@ if(array_key_exists("sessionId", $_GET)){
 
         $returnData = [];
         $returnData['sessionId'] = intval($lastSessionId);
-        $returnData['accessToken'] = $accessToken;
-        $returnData['accessTokenExpires'] = $accessTokenExpiry;
         $returnData['refreshToken'] = $refreshToken;
         $returnData['refreshTokenExpires'] = $refreshTokenExpiry;
 
@@ -395,6 +350,7 @@ if(array_key_exists("sessionId", $_GET)){
 
     } catch (PDOException $e) {
         //rollback to before beginTransaction() if there's and error
+        error_log($e);
         $writeDB -> rollBack();
         $response = new ResponseModel();
         $response->setHttpStatusCode(500);
