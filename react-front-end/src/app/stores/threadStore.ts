@@ -17,10 +17,8 @@ export default class ThreadStore {
         try {
             var thread = await agent.Threads.list();
             thread.forEach((element , index) => {
-                console.log("INDEX : " + (index + 1));
                 this.threadRegistry.set(String((index + 1)),element)
             });
-            console.log(thread);
             runInAction(() => {this.threads = thread;})
             
         } catch (error) {
@@ -43,14 +41,13 @@ export default class ThreadStore {
         console.log(id);
         
         let thread = await agent.Threads.details(id);
-        console.log("Hello" + thread);
-        console.log(thread);
+        
         if (thread) {
             runInAction(() => this.selectedThread = thread[0]);
-            console.log(thread);
+            
             return thread;
         } else {
-            console.log("Hello");
+            
             try{
                 thread = await agent.Threads.details(id);
                 this.setThread(thread[0]!);

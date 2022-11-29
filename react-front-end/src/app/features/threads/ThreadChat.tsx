@@ -17,8 +17,6 @@ export default observer(function ThreadChat({ thread}: Props) {
     const { postStore } = useStore();
     const { threadStore } = useStore();
     
-    console.log("ConsoleLog ThreadChat" + thread);
-    console.log(thread);
     return (
     <Segment attached clearing>
         <Item.Group>

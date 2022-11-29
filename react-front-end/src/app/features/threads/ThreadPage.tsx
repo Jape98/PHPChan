@@ -13,8 +13,7 @@ export default observer(function ThreadsPage() {
         if (id) threadStore.loadThread(id);
         return () => clearSelecterThread();
     }, [id, loadThread, clearSelecterThread]);
-    console.log("Console log ThreadPage : " + thread);
-    console.log(thread);
+    
     
     if(thread){
         return(<div>
