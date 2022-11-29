@@ -1,0 +1,245 @@
+{
+	"info": {
+		"_postman_id": "72e67d75-7e15-478a-8c48-f86b1e6dd47d",
+		"name": "php himmeli",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Get thread by id",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/thread/1",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"thread",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get all threads",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/threads",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"threads"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete thread by id",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/thread/1",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"thread",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create user",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"username\":\"PostmanPat\",\r\n    \"password\":\"fdsadfasfadsadfsadfsadfs\",\r\n    \"email\":\"post@postaaja.com\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/users",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"users"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Login and save token to variable",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"const jsonResponse = pm.response.json();\r",
+							"\r",
+							"pm.collectionVariables.set('refreshToken', jsonResponse.refreshToken);\r",
+							"pm.collectionVariables.set('sessionId', jsonResponse.sessionId);\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"email\":\"post@postaaja.com\",\r\n    \"password\":\"fdsadfasfadsadfsadfsadfs\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/login",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Refresh token",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"const jsonResponse = pm.response.json();\r",
+							"\r",
+							"pm.collectionVariables.set('refreshToken', jsonResponse.refreshToken);\r",
+							"pm.collectionVariables.set('sessionId', jsonResponse.sessionId);\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "{{refreshToken}}",
+						"type": "default"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/session/{{sessionId}}",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"session",
+						"{{sessionId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Logout",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "{{refreshToken}}",
+						"type": "default"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/session/{{sessionId}}",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"session",
+						"{{sessionId}}"
+					],
+					"query": [
+						{
+							"key": "",
+							"value": "",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "refreshToken",
+			"value": "",
+			"type": "default"
+		},
+		{
+			"key": "sessionId",
+			"value": "",
+			"type": "default"
+		},
+		{
+			"key": "url",
+			"value": "http://localhost/PHPChan",
+			"type": "default"
+		}
+	]
+}

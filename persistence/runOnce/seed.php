@@ -19,13 +19,17 @@ try {
 }
 
 try {
-    $user = "INSERT INTO user(username, email, password) VALUES('TestUser', 'tester2@test.com', 'test')";
+    $user = "INSERT INTO user(username, email, password, loginAttempts) VALUES('TestUser', 'tester@test.com', 'test', 0)";
+    $user2 = "INSERT INTO user(username, email, password, loginAttempts) VALUES('TestUser2', 'tester2@test.com', 'test', 0)";
     $thread = "INSERT INTO thread(userId, content) VALUES(1, 'Test thread.')";
+    $thread2 = "INSERT INTO thread(userId, content) VALUES(2, 'Second test thread.')";
     $post = "INSERT INTO post(threadId, userId, content) VALUES(1, 1, 'Test post')";
     $post2 = "INSERT INTO post(threadId, userId, content) VALUES(1, 1, 'Test post2')";
 
     $writeDB -> exec($user);
+    $writeDB -> exec($user2);
     $writeDB -> exec($thread);
+    $writeDB -> exec($thread2);
     $writeDB -> exec($post);
     $writeDB -> exec($post2);
 
