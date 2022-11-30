@@ -1,10 +1,12 @@
 <?php
-
+#region depencies
 require_once('../persistence/db.php');
 require_once('../model/ThreadModel.php');
 require_once('../model/PostModel.php');
 require_once('../model/ResponseModel.php');
+#endregion
 
+#region DB connect
 try {
     $writeDB = DB::connectWriteDB();
     $readDB = DB::connectReadDB();
@@ -18,22 +20,86 @@ try {
     $response->send();
     exit();
 }
+#endregion
 
-if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    #region GET single thread by ID and all of its messages 
+if(empty($_GET)) {
 
-    if(array_key_exists("id", $_GET)) {
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
-        $Id = $_GET['id'];
-        //if id is invalid, return 400
-        if ($Id == '' || !is_numeric($Id)){
+        #region GET all threads
+        try {
+            $query = $readDB->prepare('SELECT t.id AS threadId, u.username AS threadUsername, u.id AS threadUserId, t.content AS threadContent, DATE_FORMAT(t.createdAt, "%d.%m.%Y %H:%i") AS threadCreatedAt FROM thread t LEFT JOIN user u ON t.userId = u.id');
+            $query->execute();
+
+            $threads = array();
+            while($row = $query->fetch(PDO::FETCH_ASSOC)) {
+
+                $thread = new Thread($row['threadId'], $row['threadUserId'], $row['threadUsername'], $row['threadContent'], $row['threadCreatedAt']);
+                $threads[] = $thread->returnThreadAsArray();
+            }
+
             $response = new ResponseModel();
-            $response->setHttpStatusCode(400);
+            $response->setHttpStatusCode(200);
+            $response->setSuccess(true);
+            $response->toCache(true);
+            $response->setData($threads);
+            $response->send();
+            exit();
+
+        } catch(ThreadException $e) {
+            $response = new ResponseModel();
+            $response->setHttpStatusCode(500);
             $response->setSuccess(false);
-            $response->addMessage("Invalid thread id");
+            $response->addMessage($e->getMessage());
             $response->send();
             exit();
         }
+        catch(PDOException $e) {
+            error_log("Database Error: ".$e, 0);
+            $response = new ResponseModel();
+            $response->setHttpStatusCode(500);
+            $response->setSuccess(false);
+            $response->addMessage("Failed to get threads");
+            $response->send();
+            exit();
+        }
+    #endregion
+
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    
+        #region DOTO: tää
+        #endregion
+
+    } else {
+
+        #region other methods not allowed
+        $response = new ResponseModel();
+        $response->setHttpStatusCode(405);
+        $response->setSuccess(false);
+        $response->addMessage("Method not allowed");
+        $response->send();
+        exit();
+        #endregion
+
+    } 
+
+} elseif(array_key_exists("id", $_GET)) {
+
+    #region Check if id is valid
+    $Id = $_GET['id'];   
+    if ($Id == '' || !is_numeric($Id)){
+        $response = new ResponseModel();
+        $response->setHttpStatusCode(400);
+        $response->setSuccess(false);
+        $response->addMessage("Invalid thread id");
+        $response->send();
+        exit();
+    }
+    #endregion
+
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+
+        #region GET single thread by ID and all of its messages 
         try {
             //query to get thread by id,
             $query = $readDB->prepare('SELECT t.id AS threadId, u.username AS threadUsername, u.id AS threadUserId, t.content AS threadContent, DATE_FORMAT(t.createdAt, "%d.%m.%Y %H:%i") AS threadCreatedAt, p.id AS postId , p.content AS postContent, DATE_FORMAT(p.createdAt, "%d.%m.%Y %H:%i") AS postCreatedAt, pu.id AS postUserId, pu.username AS postUsername FROM thread t LEFT JOIN post p ON t.id = p.threadId LEFT JOIN  user u ON t.userId = u.id LEFT JOIN  user pu ON p.userId = pu.id WHERE t.id = :threadid');
@@ -41,6 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             $query->execute();
 
             $rowCount = $query->rowCount();
+
             //if query is empty, return 404
             if($rowCount === 0 || $query === null) {
                 $response = new ResponseModel();
@@ -50,13 +117,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 $response->send();
                 exit();
             }
-
             $i=true;
             while($row = $query ->fetch(PDO::FETCH_ASSOC)) {
+
                 if($i==true){
                     $thread = new Thread($row['threadId'], $row['threadUserId'], $row['threadUsername'], $row['threadContent'], $row['threadCreatedAt']);
                     $i=false;
                 }
+
                 if ($row['postId'] !== null) {
                     $post = new Post($row['postId'], $row['postCreatedAt'], $row['postUserId'], $row['postUsername'], $row['postContent']);
                     $thread->addPost($post->returnPostAsArray());
@@ -91,102 +159,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             $response->send();
             exit();
         }
-    #endregion
+        #endregion
 
-    #region GET all threads
-    } elseif(empty($_GET)) {
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
 
+        #region DELETE single thread by ID
         try {
-            $query = $readDB->prepare('SELECT t.id AS threadId, u.username AS threadUsername, u.id AS threadUserId, t.content AS threadContent, DATE_FORMAT(t.createdAt, "%d.%m.%Y %H:%i") AS threadCreatedAt FROM thread t LEFT JOIN user u ON t.userId = u.id');
+            $query = $writeDB->prepare('DELETE FROM thread WHERE id = :threadid');
+            $query->bindParam(':threadid', $Id, PDO::PARAM_INT);
             $query->execute();
 
-            $threads = array();
-            while($row = $query->fetch(PDO::FETCH_ASSOC)) {
-
-                $thread = new Thread($row['threadId'], $row['threadUserId'], $row['threadUsername'], $row['threadContent'], $row['threadCreatedAt']);
-                $threads[] = $thread->returnThreadAsArray();
+            $rowCount = $query->rowCount();
+            if($rowCount === 0) {
+                $response = new ResponseModel();
+                $response->setHttpStatusCode(404);
+                $response->setSuccess(false);
+                $response->addMessage("Thread not found");
+                $response->send();
+                exit();
             }
 
             $response = new ResponseModel();
             $response->setHttpStatusCode(200);
             $response->setSuccess(true);
-            $response->toCache(true);
-            $response->setData($threads);
+            $response->addMessage("Thread deleted");
             $response->send();
             exit();
 
-        } catch(ThreadException $e) {
+        } catch (PDOException $e) {
             $response = new ResponseModel();
             $response->setHttpStatusCode(500);
             $response->setSuccess(false);
-            $response->addMessage($e->getMessage());
+            $response->addMessage("Thread deleted");
             $response->send();
             exit();
         }
-        catch(PDOException $e) {
-          error_log("Database Error: ".$e, 0);
-          $response = new ResponseModel();
-          $response->setHttpStatusCode(500);
-          $response->setSuccess(false);
-          $response->addMessage("Failed to get threads");
-          $response->send();
-          exit();
-        }
+        #endregion
+
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'PATCH') {
+
+        #region DOTO: tää
+        #endregion
 
     } else {
+
+        #region other methods not allowed
         $response = new ResponseModel();
-        $response->setHttpStatusCode(404);
+        $response->setHttpStatusCode(405);
         $response->setSuccess(false);
-        $response->addMessage("Page not found");
+        $response->addMessage("Method not allowed");
         $response->send();
         exit();
+        #endregion
+
     }
-    #endregion
-    
-} elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
-
-    try {
-        $query = $writeDB->prepare('DELETE FROM thread WHERE id = :threadid');
-        $query->bindParam(':threadid', $Id, PDO::PARAM_INT);
-        $query->execute();
-
-        $rowCount = $query->rowCount();
-        if($rowCount === 0) {
-            $response = new ResponseModel();
-            $response->setHttpStatusCode(404);
-            $response->setSuccess(false);
-            $response->addMessage("Thread not found");
-            $response->send();
-            exit();
-        }
-
-        $response = new ResponseModel();
-        $response->setHttpStatusCode(200);
-        $response->setSuccess(true);
-        $response->addMessage("Thread deleted");
-        $response->send();
-        exit();
-
-    } catch (PDOException $e) {
-        $response = new ResponseModel();
-        $response->setHttpStatusCode(500);
-        $response->setSuccess(false);
-        $response->addMessage("Thread deleted");
-        $response->send();
-        exit();
-    }
-
-} elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
-    exit();
-} elseif ($_SERVER['REQUEST_METHOD'] === 'PATCH') {
-
-    exit();
 
 } else {
     $response = new ResponseModel();
-    $response->setHttpStatusCode(405);
+    $response->setHttpStatusCode(404);
     $response->setSuccess(false);
-    $response->addMessage("Request method not allowed");
+    $response->addMessage("Endpoint not found");
     $response->send();
     exit();
 }
