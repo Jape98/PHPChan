@@ -1,16 +1,20 @@
 import axios, { AxiosResponse } from "axios";
-import { User, UserLoginValues } from "../models/User";
+import { User, UserCreateValues, UserLoginValues } from "../models/User";
 import { Thread, ThreadPostValues } from "../models/Thread";
 import { Post } from "../models/Post";
 import { store } from "../stores/store";
+import { request } from "http";
 
-axios.defaults.baseURL = process.env.REACT_APP_API_URL;
+axios.defaults.baseURL = "http://localhost/";
+
 
 axios.interceptors.request.use(config => {
     const token = store.userStore.token;
     if (token && config.headers) config.headers.Authorization = `Bearer ${token}`
+    
     return config;
 })
+
 
 const responseBody = <T> (response: AxiosResponse<T>) => response.data;
 
@@ -29,8 +33,9 @@ const Threads = {
 
 const Account = {
     current:() => requests.get<User>('/account/current'),
-    login: (user: UserLoginValues) => requests.post<User>('/account/login', user),
-    refreshToken: () => requests.post<User>('account/current', {})
+    login: (user: UserLoginValues) => requests.post<User>('/controller/users.php', user),
+    refreshToken: () => requests.post<User>('account/current', {}),
+    create: (user : UserCreateValues) => requests.post<User>('/controller/users.php', user)
 }
 
 const agent = {
