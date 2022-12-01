@@ -1,25 +1,10 @@
 <?php
-
 require_once('../persistence/db.php');
 require_once('../model/ResponseModel.php');
+require_once('../authentication/currentUser.php');
 
-#region Try db connect, throw http500 if error
-try {
-    $writeDB = DB::connectWriteDB();
-    $readDB = DB::connectReadDB();
-
-} catch (PDOException $e) {
-    //0 = php error logfile
-    error_log("Connection error - ".$e, 0);
-    $response = new ResponseModel();
-    $response->setHttpStatusCode(500);
-    $response->setSuccess(false);
-    $response->addMessage("Database connection error");
-    $response->send();
-    exit();
-}
-#endregion
-
+$DBConnection = DB::connectDB();
+    
 #region Validate JSON input and input fields
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     $response = new ResponseModel();
@@ -87,7 +72,7 @@ $password = $jsonData->password;
 try {
     #region Check if user/email already in database
 
-    $query = $writeDB->prepare('SELECT id FROM user WHERE username = :username');
+    $query = $DBConnection->prepare('SELECT id FROM user WHERE username = :username');
     $query->bindParam(':username', $username, PDO::PARAM_STR);
     $query->execute();
 
@@ -101,7 +86,7 @@ try {
         exit();
     }
 
-    $query = $writeDB->prepare('SELECT id FROM user WHERE email = :email');
+    $query = $DBConnection->prepare('SELECT id FROM user WHERE email = :email');
     $query->bindParam(':email', $email, PDO::PARAM_STR);
     $query->execute();
 
@@ -119,7 +104,7 @@ try {
     #region Insert new user to db
     $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
-    $query = $writeDB->prepare('INSERT INTO user (username, email, password, loginAttempts) VALUES (:username, :email, :pw, 0)');
+    $query = $DBConnection->prepare('INSERT INTO user (username, email, password, loginAttempts) VALUES (:username, :email, :pw, 0)');
     $query->bindParam(':username', $username, PDO::PARAM_STR);
     $query->bindParam(':email', $email, PDO::PARAM_STR);
     $query->bindParam(':pw', $hashed_password, PDO::PARAM_STR);
@@ -137,7 +122,7 @@ try {
     #endregion
 
     #region Send created user info back to the client
-    $lastUserId = $writeDB->lastInsertId();
+    $lastUserId = $DBConnection->lastInsertId();
     $returnData = array();
     $returnData['user_id'] = $lastUserId;
     $returnData['username'] = $username;

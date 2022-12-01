@@ -1,22 +1,10 @@
 <?php
-
 require_once('../persistence/db.php');
 require_once('../model/ResponseModel.php');
 
-#region Try db connect
-try {
-    $writeDB = DB::connectWriteDB();
-} catch (PDOException $e) {
-    //0 = php error logfile
-    error_log("Connection error - ".$e, 0);
-    $response = new ResponseModel();
-    $response->setHttpStatusCode(500);
-    $response->setSuccess(false);
-    $response->addMessage("Database connection error");
-    $response->send();
-    exit();
-}
-#endregion
+$DBConnection = DB::connectDB();
+
+$isLoggedIn = isLoggedIn();
 
 if(array_key_exists("sessionId", $_GET)){
     #region get current refreshToken
@@ -49,7 +37,7 @@ if(array_key_exists("sessionId", $_GET)){
     if($_SERVER['REQUEST_METHOD'] === 'DELETE') {
     #region handle delete as logout
         try {
-            $query = $writeDB->prepare('DELETE FROM userSession WHERE id = :sessionId AND refreshToken = :refreshToken');
+            $query = $DBConnection->prepare('DELETE FROM userSession WHERE id = :sessionId AND refreshToken = :refreshToken');
             $query->bindParam(':sessionId', $sessionId, PDO::PARAM_INT);
             $query->bindParam(':refreshToken', $refreshToken, PDO::PARAM_STR);
             $query->execute();
@@ -93,7 +81,7 @@ if(array_key_exists("sessionId", $_GET)){
 
         try {
             #region get needed data from db
-            $query = $writeDB->prepare('SELECT userSession.id as sessionId, user.id as userId, refreshToken, loginAttempts, refreshTokenExpiry FROM userSession, user WHERE user.id = userSession.userId AND userSession.id = :sessionId AND userSession.refreshToken = :refreshToken');
+            $query = $DBConnection->prepare('SELECT userSession.id as sessionId, user.id as userId, refreshToken, loginAttempts, refreshTokenExpiry FROM userSession, user WHERE user.id = userSession.userId AND userSession.id = :sessionId AND userSession.refreshToken = :refreshToken');
             $query->bindParam(':sessionId', $sessionId, PDO::PARAM_INT);
             $query->bindParam(':refreshToken', $refreshToken, PDO::PARAM_STR);
             $query->execute();
@@ -145,7 +133,7 @@ if(array_key_exists("sessionId", $_GET)){
             $refreshToken = base64_encode(bin2hex(openssl_random_pseudo_bytes(24))).time();
             $refreshTokenExpiry = 900; //15 minutes
 
-            $query = $writeDB->prepare('UPDATE userSession SET refreshToken = :refreshToken, refreshTokenExpiry = date_add(NOW(), INTERVAL :refreshTokenExpiry SECOND) WHERE id = :sessionId AND userId = :userId AND refreshToken = :oldRefreshToken');
+            $query = $DBConnection->prepare('UPDATE userSession SET refreshToken = :refreshToken, refreshTokenExpiry = date_add(NOW(), INTERVAL :refreshTokenExpiry SECOND) WHERE id = :sessionId AND userId = :userId AND refreshToken = :oldRefreshToken');
             $query->bindParam(':userId', $fromDb_userId, PDO::PARAM_INT);
             $query->bindParam(':sessionId', $fromDb_sessionId, PDO::PARAM_INT);
             $query->bindParam(':refreshToken', $refreshToken, PDO::PARAM_STR);
@@ -195,7 +183,7 @@ if(array_key_exists("sessionId", $_GET)){
         $response->addMessage("Request method not allowed");
         $response->send();
         exit();
-      } 
+    }
 
 // if GET empty = login
 } elseif (empty($_GET)) {
@@ -257,7 +245,7 @@ if(array_key_exists("sessionId", $_GET)){
         $email = $inputJson->email;
         $password = $inputJson->password;
 
-        $query = $writeDB->prepare('SELECT id, email, username, loginAttempts, password FROM user WHERE email = :email');
+        $query = $DBConnection->prepare('SELECT id, email, username, loginAttempts, password FROM user WHERE email = :email');
         $query -> bindParam(':email', $email, PDO::PARAM_STR);
         $query -> execute();
         $rowCount = $query->rowCount();
@@ -289,7 +277,7 @@ if(array_key_exists("sessionId", $_GET)){
 
         if(!password_verify($password, $fromDb_password)){
             //add 1 to loginAttempts on fail
-            $query = $writeDB->prepare('UPDATE user SET loginAttempts = loginAttempts + 1 where id = :id');
+            $query = $DBConnection->prepare('UPDATE user SET loginAttempts = loginAttempts + 1 where id = :id');
             $query->bindParam(':id', $fromDb_id, PDO::PARAM_INT);
             $query->execute();
 
@@ -320,20 +308,20 @@ if(array_key_exists("sessionId", $_GET)){
         $refreshTokenExpiry = 900; //15 minutes
 
         //Reset login attempts back to 0
-        $writeDB->beginTransaction();
-        $query = $writeDB->prepare('UPDATE user SET loginAttempts = 0 WHERE id = :id');
+        $DBConnection->beginTransaction();
+        $query = $DBConnection->prepare('UPDATE user SET loginAttempts = 0 WHERE id = :id');
         $query->bindParam(':id', $fromDb_id, PDO::PARAM_INT);
 
         //for dates use sql date_add(NOW()) and then add seconds from variable
-        $query = $writeDB->prepare('INSERT INTO userSession (userId, refreshToken, refreshTokenExpiry) VALUES (:userId, :refreshToken, date_add(NOW(), INTERVAL :refreshTokenExpiry SECOND))');
+        $query = $DBConnection->prepare('INSERT INTO userSession (userId, refreshToken, refreshTokenExpiry) VALUES (:userId, :refreshToken, date_add(NOW(), INTERVAL :refreshTokenExpiry SECOND))');
         $query->bindParam(':userId', $fromDb_id, PDO::PARAM_INT);
         $query->bindParam(':refreshToken', $refreshToken, PDO::PARAM_STR);
         $query->bindParam(':refreshTokenExpiry', $refreshTokenExpiry, PDO::PARAM_INT);
 
         $query->execute();
 
-        $lastSessionId = $writeDB->lastInsertId();
-        $writeDB->commit();
+        $lastSessionId = $DBConnection->lastInsertId();
+        $DBConnection->commit();
 
         $returnData = [];
         $returnData['sessionId'] = intval($lastSessionId);
@@ -351,7 +339,7 @@ if(array_key_exists("sessionId", $_GET)){
     } catch (PDOException $e) {
         //rollback to before beginTransaction() if there's and error
         error_log($e);
-        $writeDB -> rollBack();
+        $DBConnection -> rollBack();
         $response = new ResponseModel();
         $response->setHttpStatusCode(500);
         $response->setSuccess(false);

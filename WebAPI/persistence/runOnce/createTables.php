@@ -4,8 +4,8 @@ require_once('../../persistence/db.php');
 require_once('../../model/ResponseModel.php');
 
 try {
-    $writeDB = DB::connectWriteDB();
-    $readDB = DB::connectReadDB();
+    $DBConnection = DB::connectDB();
+    
 
 } catch (PDOException $e) {
     //0 = php error logfile
@@ -19,7 +19,7 @@ try {
 }
 
 try {
-    $writeDB->beginTransaction();
+    $DBConnection->beginTransaction();
     $user = "CREATE TABLE user (
         id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
         username VARCHAR(255) UNIQUE NOT NULL,
@@ -28,7 +28,7 @@ try {
         loginAttempts BIGINT UNSIGNED NOT NULL,
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     )";
-    $writeDB -> exec($user);
+    $DBConnection -> exec($user);
 
     $thread = "CREATE TABLE thread (
         id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -37,7 +37,7 @@ try {
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         CONSTRAINT fkThreadUserId FOREIGN KEY (userId) REFERENCES user(id) ON DELETE CASCADE ON UPDATE CASCADE
       )";
-    $writeDB -> exec($thread);
+    $DBConnection -> exec($thread);
 
     $post = "CREATE TABLE post(
         id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -48,7 +48,7 @@ try {
         CONSTRAINT fkPostUserId FOREIGN KEY (userId) REFERENCES user(id) ON DELETE CASCADE ON UPDATE CASCADE,
         CONSTRAINT fkThread FOREIGN KEY (threadId) REFERENCES thread(id) ON DELETE CASCADE ON UPDATE CASCADE
     )";
-    $writeDB -> exec($post);
+    $DBConnection -> exec($post);
     
     $userSession = "CREATE TABLE userSession(
         id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -57,13 +57,13 @@ try {
         refreshTokenExpiry DATETIME,
         CONSTRAINT fkSessionUserId FOREIGN KEY (userId) REFERENCES user(id) ON DELETE RESTRICT ON UPDATE RESTRICT
     )";
-    $writeDB -> exec($userSession);
+    $DBConnection -> exec($userSession);
     
     echo "Tables created successfully";
 
 } catch(PDOException $e) {
     //rollback DB changes if errors appear
-    $writeDB -> rollBack();
+    $DBConnection -> rollBack();
     error_log("Database error - ".$e, 0);
     $response = new ResponseModel();
     $response->setHttpStatusCode(500);
