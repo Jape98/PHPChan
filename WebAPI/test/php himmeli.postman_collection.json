@@ -80,12 +80,13 @@
 					}
 				},
 				"url": {
-					"raw": "{{url}}/threads",
+					"raw": "{{url}}/thread/",
 					"host": [
 						"{{url}}"
 					],
 					"path": [
-						"threads"
+						"thread",
+						""
 					],
 					"query": [
 						{
@@ -223,8 +224,8 @@
 					}
 				],
 				"body": {
-					"mode": "raw",
-					"raw": "",
+					"mode": "file",
+					"file": {},
 					"options": {
 						"raw": {
 							"language": "json"

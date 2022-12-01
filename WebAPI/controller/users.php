@@ -1,7 +1,6 @@
 <?php
 require_once('../persistence/db.php');
 require_once('../model/ResponseModel.php');
-require_once('../authentication/currentUser.php');
 
 $DBConnection = DB::connectDB();
     
