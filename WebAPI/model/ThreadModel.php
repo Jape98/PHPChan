@@ -11,12 +11,9 @@ class Thread {
     private $_createdAt;
     private $_posts = array();
 
-    public function __construct($id, $userId, $userName, $content, $createdAt){
-        $this->setId($id);
+    public function __construct($userId, $content){
         $this->setUserId($userId);
-        $this->setUserName($userName);
         $this->setContent($content);
-        $this->setCreatedAt($createdAt);
     }
 
     public function getId() {

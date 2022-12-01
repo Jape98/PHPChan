@@ -22,6 +22,71 @@ try {
 }
 #endregion
 
+#region Authentication
+if(!isset($_SERVER['HTTP_AUTHORIZATION']) || strlen($_SERVER['HTTP_AUTHORIZATION']) < 1)
+{
+    $response = new ResponseModel();
+    $response->setHttpStatusCode(401);
+    $response->setSuccess(false);
+    $response->addMessage("No authorization token provided");
+    $response->send();
+    exit();
+}
+  $refreshToken = $_SERVER['HTTP_AUTHORIZATION'];
+
+  try {
+       $query = $writeDB-> prepare('SELECT us.userId, us.refreshToken, us.refreshTokenExpiry, u.loginAttempts FROM userSession us INNER JOIN user u WHERE us.userId = u.id AND us.refreshToken = :refreshToken');
+       $query->bindParam(":refreshToken", $refreshToken, PDO::PARAM_STR);
+       $query->execute();
+       $rowCount = $query->rowCount();
+
+       if($rowCount === 0)
+       {
+            $response = new ResponseModel();
+            $response->setHttpStatusCode(401);
+            $response->setSuccess(false);
+            $response->addMessage("You need to log in to view this page");
+            $response->send();
+            exit();
+       }
+       
+       $row = $query->fetch(PDO::FETCH_ASSOC);
+       $fromDB_userId = $row['userId'];
+       $fromDB_refreshToken = $row['refreshToken'];
+       $fromDB_loginAttempts = $row['loginAttempts'];
+       $fromDB_refreshTokenExpiry = $row['refreshTokenExpiry'];
+       
+
+       // check if user is locked out
+       if($fromDB_loginAttempts >= 3) {
+            $response = new ResponseModel();
+            $response->setHttpStatusCode(401);
+            $response->setSuccess(false);
+            $response->addMessage("User account locked");
+            $response->send();
+            exit();
+       }
+
+       // check if refresh token has expired
+       if(strtotime($fromDB_refreshTokenExpiry) < time()) {
+            $response = new ResponseModel();
+            $response->setHttpStatusCode(401);
+            $response->setSuccess(false);
+            $response->addMessage("Session expired. Please log in again");
+            $response->send();
+            exit();
+       }
+
+   } catch(PDOException $e) {
+        $response = new ResponseModel();
+        $response->setHttpStatusCode(500);
+        $response->setSuccess(false);
+        $response->addMessage("Invalid authentication token. Log in again.");
+        $response->send();
+        exit();
+   }
+#endregion
+
 if(empty($_GET)) {
 
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
@@ -34,7 +99,10 @@ if(empty($_GET)) {
             $threads = array();
             while($row = $query->fetch(PDO::FETCH_ASSOC)) {
 
-                $thread = new Thread($row['threadId'], $row['threadUserId'], $row['threadUsername'], $row['threadContent'], $row['threadCreatedAt']);
+                $thread = new Thread($row['threadUserId'], $row['threadContent']);
+                $thread->setId($row['threadId']);
+                $thread->setUserName($row['threadUsername']);
+                $thread->setCreatedAt($row['threadCreatedAt']);
                 $threads[] = $thread->returnThreadAsArray();
             }
 
@@ -66,7 +134,7 @@ if(empty($_GET)) {
     #endregion
 
     } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    
+
         #region DOTO: tää
         #endregion
 
@@ -87,7 +155,7 @@ if(empty($_GET)) {
 
     #region Check if id is valid
     $Id = $_GET['id'];   
-    if ($Id == '' || !is_numeric($Id)){
+    if ($Id == '' | !is_numeric($Id)){
         $response = new ResponseModel();
         $response->setHttpStatusCode(400);
         $response->setSuccess(false);
@@ -121,7 +189,10 @@ if(empty($_GET)) {
             while($row = $query ->fetch(PDO::FETCH_ASSOC)) {
 
                 if($i==true){
-                    $thread = new Thread($row['threadId'], $row['threadUserId'], $row['threadUsername'], $row['threadContent'], $row['threadCreatedAt']);
+                    $thread = new Thread($row['threadUserId'], $row['threadContent']);
+                    $thread->setId($row['threadId']);
+                    $thread->setUserName($row['threadUsername']);
+                    $thread->setCreatedAt($row['threadCreatedAt']);
                     $i=false;
                 }
 
@@ -198,7 +269,8 @@ if(empty($_GET)) {
 
     } elseif ($_SERVER['REQUEST_METHOD'] === 'PATCH') {
 
-        #region DOTO: tää
+        //TODO: tää
+        #region DOTO: update thread
         #endregion
 
     } else {
