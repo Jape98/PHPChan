@@ -55,10 +55,21 @@ class ResponseModel {
             $this->_Data['data'] = $this -> _data;
         }
 
-        //send whole data with error message for debugging
-        //echo json_encode($this->_Data);
-        
-        //send only subcontroller data
-        echo json_encode($this->_data);
+        //FOR DEVELOPMENT!!!
+        //TODO: REMOVE!
+        $debug = false;
+
+        if ($debug) {
+            //full data with message
+            echo json_encode($this->_Data);
+
+        } else {
+            //only data if everywthing went ok, message if data is null.
+            if($this->_data === null || $this->_data === ""){
+                echo json_encode($this->_infoMessage);
+            } else {
+                echo json_encode($this->_data);
+            }
+        }  
     }
 }

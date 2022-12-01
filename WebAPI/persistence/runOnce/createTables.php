@@ -19,6 +19,7 @@ try {
 }
 
 try {
+    $writeDB->beginTransaction();
     $user = "CREATE TABLE user (
         id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
         username VARCHAR(255) UNIQUE NOT NULL,
@@ -61,7 +62,8 @@ try {
     echo "Tables created successfully";
 
 } catch(PDOException $e) {
-
+    //rollback DB changes if errors appear
+    $writeDB -> rollBack();
     error_log("Database error - ".$e, 0);
     $response = new ResponseModel();
     $response->setHttpStatusCode(500);
