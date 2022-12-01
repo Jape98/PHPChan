@@ -1,7 +1,8 @@
+import axios from "axios";
 import { makeAutoObservable, reaction, runInAction } from "mobx";
 import { history } from "../..";
 import agent from "../api/agent";
-import { User, UserLoginValues } from "../models/User";
+import { User, UserCreateValues, UserLoginValues } from "../models/User";
 
 
 export default class UserStore {
@@ -33,6 +34,32 @@ export default class UserStore {
             runInAction(()=> this.user = user);
             history.push("/")
 
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    createUser = async (creds:UserCreateValues) => {
+        try {
+            axios.defaults.withCredentials = true;
+            const user = await agent.Account.create(creds);
+            console.log(user);
+            
+            axios({
+                method: 'POST',
+                url: 'http://172.22.162.200/controller/users.php',
+                headers: {
+                    "Access-Control-Allow-Credentials": "true"
+                    },
+                data:{
+                    username:creds.username,
+                    email:creds.email,
+                    password:creds.password
+                }
+              })
+                .then(function (response) {
+                  console.log(response.data);
+                });
         } catch (error) {
             throw error;
         }

@@ -7,6 +7,7 @@ import MenuBar from './MenuBar';
 import ThreadsView from '../features/threads/ThreadsView';
 import ThreadsPage from '../features/threads/ThreadPage';
 import LoginForm from '../features/login/LoginForm';
+import CreateUser from '../features/login/CreateUser';
 
 
 function App() {
@@ -28,6 +29,7 @@ function App() {
           <Route path='/' element={<ThreadsView threads={threadStore.threads}/>}/>
           <Route path='/thread/:id' element={<ThreadsPage />}/>
           <Route path='/login' element={<LoginForm />}/>
+          <Route path='/createUser' element={<CreateUser />}></Route>
         </Routes>
       </Container>
     </>

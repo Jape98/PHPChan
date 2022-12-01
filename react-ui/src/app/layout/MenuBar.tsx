@@ -21,7 +21,10 @@ export default observer( function MenuBar() {
                         <Dropdown.Menu>
                             {isLoggedIn ?
                                 <Dropdown.Item onClick={logout} text='Logout' icon='power' /> :
-                                <Dropdown.Item as={Link} to="/login" text='Login' icon='user' />
+                                <>
+                                    <Dropdown.Item as={Link} to="/login" text='Login to account' icon='user' />
+                                    <Dropdown.Item as={Link} to="/createUser" text='Create New User' icon='save' />
+                                </>
                             }
                         </Dropdown.Menu>
                     </Dropdown>
