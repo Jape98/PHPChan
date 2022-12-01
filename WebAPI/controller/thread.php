@@ -8,8 +8,6 @@ require_once('../authentication/currentUser.php');
 #endregion
 
 $DBConnection = DB::connectDB();
-$isLoggedIn = isLoggedIn();
-
 
 if(empty($_GET)) {
 
@@ -57,7 +55,7 @@ if(empty($_GET)) {
         }
     #endregion
 
-    } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $isLoggedIn) {
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isLoggedIn()) {
 
         #region create a new thread
         try {
@@ -160,7 +158,7 @@ if(empty($_GET)) {
     }
     #endregion
 
-    if ($_SERVER['REQUEST_METHOD'] === 'GET'&& $isLoggedIn) {
+    if ($_SERVER['REQUEST_METHOD'] === 'GET'&& isLoggedIn()) {
 
         #region GET single thread by ID and all of its messages 
         try {
@@ -227,7 +225,7 @@ if(empty($_GET)) {
         }
         #endregion
 
-    } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $isLoggedIn) {
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE' && isLoggedIn()) {
 
         #region Check if user is authorized to delete thread
         try{
@@ -291,7 +289,7 @@ if(empty($_GET)) {
         }
         #endregion
 
-    } elseif ($_SERVER['REQUEST_METHOD'] === 'PATCH' && $isLoggedIn) {
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'PATCH' && isLoggedIn()) {
 
         //TODO: tää
         #region Update thread
