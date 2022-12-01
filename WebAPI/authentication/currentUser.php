@@ -17,7 +17,7 @@ function isLoggedIn() {
     }
     $refreshToken = $_SERVER['HTTP_AUTHORIZATION'];
     try {
-        $query = $GLOBALS['DBConnection']-> prepare('SELECT us.refreshTokenExpiry, u.loginAttempts FROM userSession us INNER JOIN user u WHERE us.userId = u.id AND us.refreshToken = :refreshToken');
+        $query = $GLOBALS['DBConnection']-> prepare('SELECT us.refreshTokenExpiry, u.loginAttempts, us.userId, us.refreshToken FROM userSession us INNER JOIN user u WHERE us.userId = u.id AND us.refreshToken = :refreshToken');
         $query->bindParam(":refreshToken", $refreshToken, PDO::PARAM_STR);
         $query->execute();
         $rowCount = $query->rowCount();
@@ -32,6 +32,8 @@ function isLoggedIn() {
         }
         
         $row = $query->fetch(PDO::FETCH_ASSOC);
+        $GLOBALS['fromDB_userId'] = $row['userId'];
+        $GLOBALS['fromDB_refreshToken'] = $row['refreshToken'];
         $fromDB_loginAttempts = $row['loginAttempts'];
         $fromDB_refreshTokenExpiry = $row['refreshTokenExpiry'];
         

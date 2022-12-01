@@ -4,8 +4,6 @@ require_once('../model/ResponseModel.php');
 
 $DBConnection = DB::connectDB();
 
-$isLoggedIn = isLoggedIn();
-
 if(array_key_exists("sessionId", $_GET)){
     #region get current refreshToken
     $sessionId = $_GET['sessionId'];
