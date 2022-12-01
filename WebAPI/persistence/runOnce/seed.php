@@ -46,7 +46,7 @@ try {
     $response = new ResponseModel();
     $response->setHttpStatusCode(500);
     $response->setSuccess(false);
-    $response->addMessage("Database write error");
+    $response->addMessage("Database write error: $e");
     $response->send();
     exit();
 }

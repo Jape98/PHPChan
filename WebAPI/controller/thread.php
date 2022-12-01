@@ -23,7 +23,7 @@ try {
 #endregion
 
 #region Authentication
-if(!isset($_SERVER['HTTP_AUTHORIZATION']) || strlen($_SERVER['HTTP_AUTHORIZATION']) < 1)
+if(!isset($_SERVER['HTTP_AUTHORIZATION']) || (strlen($_SERVER['HTTP_AUTHORIZATION']) < 1))
 {
     $response = new ResponseModel();
     $response->setHttpStatusCode(401);
@@ -135,8 +135,79 @@ if(empty($_GET)) {
 
     } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-        #region DOTO: tää
-        #endregion
+        #region create a new thread
+        try {
+            if ($_SERVER['CONTENT_TYPE'] !== 'application/json') {
+               $response = new ResponseModel();
+               $response->setHttpStatusCode(400);
+               $response->setSuccess(false);
+               $response->addMessage("Content type header not set to JSON");
+               $response->send();
+               exit();
+            }
+           
+            $rawPostData = file_get_contents('php://input');
+            if(!$inputJson = json_decode($rawPostData)) {
+               $response = new ResponseModel();
+               $response->setHttpStatusCode(400);
+               $response->setSuccess(false);
+               $response->addMessage("Request body not valid JSON");
+               $response->send();
+               exit();
+            }
+
+            if(!isset($inputJson->content)) {
+               $response = new ResponseModel();
+               $response->setHttpStatusCode(400);
+               $response->setSuccess(false);
+               $response->addMessage("Thread can not be empty!");
+               $response->send();
+               exit();
+            }
+
+            $newThread = new Thread($fromDB_userId, $inputJson->content);
+            $newUserId = $newThread->getUserId();
+            $newContent = $newThread->getContent();
+
+            $query = $writeDB->prepare("INSERT INTO thread(userId, content) VALUES(:userId, :content)");
+            $query->bindParam(":userId", $newUserId, PDO::PARAM_INT);
+            $query->bindParam(":content", $newContent, PDO::PARAM_STR);
+            $query->execute();
+
+            $rowCount = $query->rowCount();
+            if ($rowCount === 0) {
+                $response = new ResponseModel();
+                $response->setHttpStatusCode(500);
+                $response->setSuccess(false);
+                $response->addMessage("Error creating a new thread. Please try again");
+                $response->send();
+                exit();
+            }
+            $response = new ResponseModel();
+            $response->setHttpStatusCode(200);
+            $response->setSuccess(true);
+            $response->addMessage("Thread created successfully");
+            $response->send();
+            exit();
+            
+        } catch(ThreadException $e) {
+           $response = new ResponseModel();
+           $response->setHttpStatusCode(400);
+           $response->setSuccess(false);
+           $response->addMessage($e->getMessage());
+           $response->send();
+           exit();
+
+        } catch(PDOException $e) {
+           error_log("Database Query Error: ".$e, 0);
+           $response = new ResponseModel();
+           $response->setHttpStatusCode(500);
+           $response->setSuccess(false);
+           $response->addMessage("Failed to create new thread");
+           $response->send();
+           exit();
+        }
+       #endregion
 
     } else {
 
@@ -148,7 +219,6 @@ if(empty($_GET)) {
         $response->send();
         exit();
         #endregion
-
     } 
 
 } elseif(array_key_exists("id", $_GET)) {
@@ -233,6 +303,34 @@ if(empty($_GET)) {
         #endregion
 
     } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+        #region Check if user is authorized to delete thread
+        try{
+            $query = $readDB->prepare('SELECT u.id FROM user u INNER JOIN thread t WHERE u.id = t.userId AND t.id = :threadid');
+            $query->bindParam(':threadid', $Id, PDO::PARAM_INT);
+            $query->execute();
+
+            $rowCount = $query->rowCount();
+            $row = $query ->fetch(PDO::FETCH_ASSOC);
+
+            if($rowCount === 0 || $query === null || ($row['id'] !== $fromDB_userId)) {
+                $response = new ResponseModel();
+                $response->setHttpStatusCode(401);
+                $response->setSuccess(false);
+                $response->addMessage("You are not authorized to do that!");
+                $response->send();
+                exit();
+            }
+
+        } catch (PDOException $e) {
+            error_log("Connection error - ".$e, 0);
+            $response = new ResponseModel();
+            $response->setHttpStatusCode(500);
+            $response->setSuccess(false);
+            $response->addMessage("Failed to delete thread, please try again.");
+            $response->send();
+            exit();
+        }
+        #endregion
 
         #region DELETE single thread by ID
         try {
@@ -261,7 +359,7 @@ if(empty($_GET)) {
             $response = new ResponseModel();
             $response->setHttpStatusCode(500);
             $response->setSuccess(false);
-            $response->addMessage("Thread deleted");
+            $response->addMessage("Failed to delete thread, please try again.");
             $response->send();
             exit();
         }
@@ -270,7 +368,7 @@ if(empty($_GET)) {
     } elseif ($_SERVER['REQUEST_METHOD'] === 'PATCH') {
 
         //TODO: tää
-        #region DOTO: update thread
+        #region Update thread
         #endregion
 
     } else {
@@ -283,7 +381,6 @@ if(empty($_GET)) {
         $response->send();
         exit();
         #endregion
-
     }
 
 } else {
