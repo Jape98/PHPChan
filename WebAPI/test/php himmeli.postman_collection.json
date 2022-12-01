@@ -9,7 +9,13 @@
 			"name": "Get thread by id",
 			"request": {
 				"method": "GET",
-				"header": [],
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "{{refreshToken}}",
+						"type": "default"
+					}
+				],
 				"url": {
 					"raw": "{{url}}/thread/1",
 					"host": [
@@ -27,7 +33,13 @@
 			"name": "Get all threads",
 			"request": {
 				"method": "GET",
-				"header": [],
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "{{refreshToken}}",
+						"type": "default"
+					}
+				],
 				"url": {
 					"raw": "{{url}}/threads",
 					"host": [
@@ -35,6 +47,52 @@
 					],
 					"path": [
 						"threads"
+					],
+					"query": [
+						{
+							"key": "",
+							"value": "",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create a new thread",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "{{refreshToken}}",
+						"type": "default"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"content\":\"Testi2\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/threads",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"threads"
+					],
+					"query": [
+						{
+							"key": "",
+							"value": "",
+							"disabled": true
+						}
 					]
 				}
 			},
@@ -44,7 +102,13 @@
 			"name": "Delete thread by id",
 			"request": {
 				"method": "DELETE",
-				"header": [],
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "{{refreshToken}}",
+						"type": "default"
+					}
+				],
 				"url": {
 					"raw": "{{url}}/thread/1",
 					"host": [
@@ -53,6 +117,13 @@
 					"path": [
 						"thread",
 						"1"
+					],
+					"query": [
+						{
+							"key": "Authorization",
+							"value": null,
+							"disabled": true
+						}
 					]
 				}
 			},
@@ -238,7 +309,7 @@
 		},
 		{
 			"key": "url",
-			"value": "http://localhost/PHPChan",
+			"value": "http://localhost/WebAPI",
 			"type": "default"
 		}
 	]
