@@ -4,8 +4,8 @@ require_once('../../persistence/db.php');
 require_once('../../model/ResponseModel.php');
 
 try {
-    $writeDB = DB::connectWriteDB();
-    $readDB = DB::connectReadDB();
+    $DBConnection = DB::connectDB();
+    
 
 } catch (PDOException $e) {
     //0 = php error logfile
@@ -26,12 +26,12 @@ try {
     $post = "INSERT INTO post(threadId, userId, content) VALUES(1, 1, 'Test post')";
     $post2 = "INSERT INTO post(threadId, userId, content) VALUES(1, 1, 'Test post2')";
 
-    $writeDB -> exec($user);
-    $writeDB -> exec($user2);
-    $writeDB -> exec($thread);
-    $writeDB -> exec($thread2);
-    $writeDB -> exec($post);
-    $writeDB -> exec($post2);
+    $DBConnection -> exec($user);
+    $DBConnection -> exec($user2);
+    $DBConnection -> exec($thread);
+    $DBConnection -> exec($thread2);
+    $DBConnection -> exec($post);
+    $DBConnection -> exec($post2);
 
     $response = new ResponseModel();
     $response->setHttpStatusCode(200);

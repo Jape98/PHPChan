@@ -1,27 +1,62 @@
 <?php
 
 class DB {
-	private static $writeDBConnection;
-	private static $readDBConnection;
 
-	public static function connectWriteDB() {
-		if(self::$writeDBConnection === null) {
-				self::$writeDBConnection = new PDO('mysql:host=localhost;dbname=chan;charset=utf8', 'jape', 'root');
-				self::$writeDBConnection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-				self::$writeDBConnection->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
-		}
+	private static $DBConnection;
 
-		return self::$writeDBConnection;
-	}
+	//If different servers are needed for reating and writing. Right now the connections are to the same server. 
+	public static function connectDB() {
 
-	public static function connectReadDB() {
-		if(self::$readDBConnection === null) {
-				self::$readDBConnection = new PDO('mysql:host=localhost;dbname=chan;charset=utf8', 'jape', 'root');
-				self::$readDBConnection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-				self::$readDBConnection->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
-		}
+		if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
-		return self::$readDBConnection;
-	}
+			#region READ db connection
+			if(self::$DBConnection === null) {
 
+				try {
+					self::$DBConnection = new PDO('mysql:host=localhost;dbname=chan;charset=utf8', 'jape', 'root');
+					self::$DBConnection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+					self::$DBConnection->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
+
+					return self::$DBConnection;
+
+				} catch (PDOException $e) {
+					//0 = php error logfile
+					error_log("Connection error - ".$e, 0);
+					$response = new ResponseModel();
+					$response->setHttpStatusCode(500);
+					$response->setSuccess(false);
+					$response->addMessage("Database connection error");
+					$response->send();
+					exit();
+				}
+			}
+			#endregion
+
+		} else {
+
+			#region WRITE db connection
+			if(self::$DBConnection === null) {
+
+				try {
+					self::$DBConnection = new PDO('mysql:host=localhost;dbname=chan;charset=utf8', 'jape', 'root');
+					self::$DBConnection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+					self::$DBConnection->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
+
+					return self::$DBConnection;
+
+				} catch (PDOException $e) {
+					//0 = php error logfile
+					error_log("Connection error - ".$e, 0);
+					$response = new ResponseModel();
+					$response->setHttpStatusCode(500);
+					$response->setSuccess(false);
+					$response->addMessage("Database connection error");
+					$response->send();
+					exit();
+				}
+			}
+			#endregion
+
+		}	
+	}	
 }
