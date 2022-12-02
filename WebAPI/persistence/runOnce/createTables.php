@@ -59,7 +59,12 @@ try {
     )";
     $DBConnection -> exec($userSession);
     
-    echo "Tables created successfully";
+    $response = new ResponseModel();
+    $response->setHttpStatusCode(200);
+    $response->setSuccess(true);
+    $response->addMessage("Created tables successfully");
+    $response->send();
+    exit();
 
 } catch(PDOException $e) {
     //rollback DB changes if errors appear
